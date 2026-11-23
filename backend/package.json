@@ -2,10 +2,11 @@
   "name": "backend",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev2": "tsx watch src/index.ts",
-    "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
+    "dev": "tsx watch src/index.ts",
+    "server": "tsc-watch --onSuccess \"node dist/index.js\"",
     "build": "tsc",
     "start": "node dist/index.js",
     "db:pull": "npx prisma db pull",
@@ -30,8 +31,11 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
     "nodemon": "^3.1.14",
     "prisma": "^6.19.3",
     "tsc-watch": "^7.2.1",

@@ -1,15 +1,57 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model categoria {
+  id   Int     @id @default(autoincrement())
+  name String? @unique @db.VarChar(250)
+  item item[]
+}
+
+model imagen {
+  id         Int          @id @default(autoincrement())
+  url        String
+  alt_text   String?      @db.VarChar(250)
+  item_image item_image[]
+}
+
+model item {
+  id           Int          @id @default(autoincrement())
+  name         String?      @db.VarChar(350)
+  price        Decimal?     @db.Decimal(12, 2)
+  description  String?
+  status       String       @default("disponible") @db.VarChar(100)
+  categoria_id Int?
+  unidad_id    Int?
+  categoria    categoria?   @relation(fields: [categoria_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_item_categoria")
+  unidad       unidad?      @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_item_unidad")
+  item_image   item_image[]
+
+  @@index([categoria_id], map: "idx_item_categoria")
+  @@index([name], map: "idx_item_nombre")
+  @@index([status], map: "idx_item_status")
+}
+
+model item_image {
+  item_id   Int
+  imagen_id Int
+  orden     Int
+  imagen    imagen @relation(fields: [imagen_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  item      item   @relation(fields: [item_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([item_id, imagen_id])
+  @@unique([item_id, orden])
+  @@index([imagen_id], map: "idx_item_image_imagen")
+}
+
+model unidad {
+  id   Int     @id @default(autoincrement())
+  name String? @db.VarChar(250)
+  item item[]
 }
