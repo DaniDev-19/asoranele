@@ -31,8 +31,8 @@ if (process.env.NODE_ENV !== "production") {
 export async function connectDb () {
     try {
         await prisma.$connect();
-        await prisma.$queryRaw`SELECT NOW()`;
-        console.log("Conexión a PostgreSQL + prisma establecida correctamente");
+        const result = await prisma.$queryRaw`SELECT NOW()`;
+        console.log("Conexión a PostgreSQL + prisma establecida correctamente", result);
         return prisma;
     } catch (error) {
         console.error("Error al conectar a la base de datos", error);

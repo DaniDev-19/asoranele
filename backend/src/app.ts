@@ -5,11 +5,7 @@ import "dotenv/config";
 import express from "express";
 import { corsOptions } from "./utils/cors.js";
 import { helmetConfig } from "./utils/helmet.js";
-import {
-  errorHandler,
-  notFoundHandler,
-  requestIdMiddleware,
-} from "./middleware/globalError.middleware.js";
+import { errorHandler, notFoundHandler, requestIdMiddleware } from "./middleware/globalError.middleware.js";
 
 const app = express();
 const serverName = process.env.SERVER_NAME || "Asoranele PlatForm";
