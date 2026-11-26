@@ -55,3 +55,17 @@ model unidad {
   name String? @db.VarChar(250)
   item item[]
 }
+
+model tasa_cambio {
+  id             Int      @id @default(autoincrement())
+  dolar_bcv      Decimal  @db.Decimal(14, 4)
+  dolar_paralelo Decimal  @db.Decimal(14, 4)
+  euro_bcv       Decimal  @db.Decimal(14, 4)
+  euro_paralelo  Decimal  @db.Decimal(14, 4)
+  fecha          DateTime @default(now()) @db.Date
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([created_at(sort: Desc)], map: "idx_tasa_created_at")
+  @@index([fecha(sort: Desc)], map: "idx_tasa_fecha")
+}
