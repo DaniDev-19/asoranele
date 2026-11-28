@@ -7,7 +7,6 @@ import {
   Ruler,
   DollarSign,
   Images,
-  Menu,
   X,
   RefreshCw,
   MoreHorizontal,
@@ -156,16 +155,6 @@ function Layout() {
         {/* Header Mobile-First */}
         <header className="sticky top-0 z-30 flex h-14 sm:h-16 shrink-0 items-center justify-between gap-2 border-b border-violet-700/20 bg-violet-600 px-3 sm:px-6 shadow-sm pt-[env(safe-area-inset-top)]">
           <div className="flex items-center gap-2 min-w-0">
-            <button
-              type="button"
-              onClick={() => setSidebarOpen(true)}
-              className="cursor-pointer lg:hidden min-h-10 min-w-10 flex items-center justify-center rounded-xl text-violet-100 hover:bg-white/15 hover:text-white transition-colors"
-              aria-label="Abrir menú"
-              title='Abrir menú'
-            >
-              <Menu className="h-5 w-5 cursor-pointer" />
-            </button>
-
             <h1 className="text-base sm:text-xl font-bold tracking-tight text-white truncate">
               {pageTitle}
             </h1>
