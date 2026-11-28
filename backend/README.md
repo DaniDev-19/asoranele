@@ -105,31 +105,32 @@ R2_PUBLIC_DOMAIN=https://pub-xxxx.r2.dev
 
 ---
 
-## 6. Despliegue con Neon y Cloudflare
+## 6. Despliegue con Neon, Vercel y Cloudflare R2
 
-> Nota de arquitectura: Este backend utiliza **Express 5**, **Prisma ORM** (motor binario) y **Sharp** (binario nativo `libvips`), los cuales requieren un entorno Node.js completo (contenedor o servidor Node) y **no** son compatibles directamente con el runtime aislado V8 de Cloudflare Workers sin reescritura. La arquitectura recomendada integra **Cloudflare Pages** (frontend), **Cloudflare R2** (imagenes), **Neon** (base de datos) y **Cloudflare Proxy / Tunnel** protegiendo el servidor Node.js.
+> Nota de arquitectura: Este backend utiliza **Express 5**, **Prisma ORM** (motor binario) y **Sharp** (binario nativo `libvips`), los cuales requieren un entorno Node.js completo y **no** son compatibles directamente con Cloudflare Workers (V8 Isolates) sin reescritura. Para produccion serverless puedes desplegar el backend directamente en **Vercel** (Node.js Serverless Functions) conectado a **Neon** y **Cloudflare R2**, o en un contenedor/PaaS detras de **Cloudflare Proxy / Tunnel**.
 
-### Pasos de Despliegue
-1. **Preparar Neon**:
-   - En `backend/.env`, establece `DB_PROVIDER="neon"` y verifica `DATABASE_URL_NEON`.
-   - Sincroniza el esquema hacia Neon:
-     ```bash
-     npm run db:generate
-     npm run db:push
-     ```
-2. **Activar Cloudflare R2**:
-   - Configura `STORAGE_DRIVER=r2` y tus credenciales `R2_*` en las variables de entorno de produccion.
-3. **Desplegar el Backend Node.js**:
-   - Despliega `backend/` en tu proveedor Node/Docker (Render, Railway, Fly.io, Koyeb o VPS) ejecutando:
-     ```bash
-     npm install
-     npm run db:generate
-     npm run build
-     npm run start
-     ```
-   - Configura `NODE_ENV=production`, `DB_PROVIDER=neon`, `STORAGE_DRIVER=r2` y `ALLOWED_ORIGINS` con la URL de tu sitio en Cloudflare Pages.
-4. **Conectar con Cloudflare**:
-   - Apunta tu subdominio (por ejemplo `api.tu-dominio.com`) en el DNS de Cloudflare con Proxy activado (nube naranja) o mediante **Cloudflare Tunnel (`cloudflared`)** hacia el puerto `4000`. Express ya tiene habilitado `app.set("trust proxy", 1)` para respetar las cabeceras de IP real de Cloudflare.
+### Opcion A: Despliegue Serverless en Vercel (con Neon + Cloudflare R2)
+1. **Sincronizar esquema hacia Neon** (una sola vez desde tu equipo o CI):
+   ```bash
+   # Con DB_PROVIDER=neon y DATABASE_URL_NEON configurados en .env
+   npm run db:generate
+   npm run db:push
+   ```
+2. **Importar el proyecto en Vercel**:
+   - Configura **Root Directory** en `backend`.
+   - El archivo [vercel.json](vercel.json) ya define `buildCommand: "npm run vercel-build"`, el rewrite hacia `api/index.js` y la inclusion de `dist/generated/prisma/**` (con `binaryTargets = ["native", "rhel-openssl-3.0.x"]` en `prisma/schema.prisma`).
+3. **Variables de entorno obligatorias en Vercel**:
+   - `NODE_ENV=production`
+   - `DB_PROVIDER=neon`
+   - `DATABASE_URL_NEON=<tu-connection-string-de-neon>`
+   - `STORAGE_DRIVER=r2` (obligatorio en Vercel porque el disco local es efimero)
+   - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_DOMAIN`
+   - `ALLOWED_ORIGINS=https://tu-frontend.vercel.app`
+
+### Opcion B: Servidor Node / Docker detras de Cloudflare Proxy o Tunnel
+1. Despliega `backend/` en Render, Railway, Fly.io, Koyeb o VPS con `npm install && npm run db:generate && npm run build && npm run start`.
+2. Configura `NODE_ENV=production`, `DB_PROVIDER=neon`, `STORAGE_DRIVER=r2` y `ALLOWED_ORIGINS`.
+3. Apunta tu subdominio en el DNS de Cloudflare con Proxy activado o mediante **Cloudflare Tunnel (`cloudflared`)** (`app.set("trust proxy", 1)` ya viene habilitado).
 
 ---
 

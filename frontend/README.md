@@ -114,7 +114,15 @@ npm run build    # Compilacion TypeScript + Vite + PWA (carpeta dist/)
 npm run preview  # Previsualizar dist/ localmente (puerto 4173)
 ```
 
-### Despliegue en Cloudflare Pages
+### Despliegue en Vercel o Cloudflare Pages
+
+#### Opcion A: Vercel (recomendada si el backend tambien esta en Vercel)
+1. Importa el repositorio en Vercel y configura **Root Directory** en `frontend`.
+2. **Build Command**: `npm run build` · **Output Directory**: `dist`.
+3. Agrega la variable de entorno `VITE_URL` con la URL HTTPS del backend desplegado en Vercel.
+4. El archivo [vercel.json](vercel.json) ya incluye los `rewrites` SPA hacia `/index.html` y las cabeceras de cache para `sw.js` y `manifest.webmanifest`.
+
+#### Opcion B: Cloudflare Pages
 1. Conecta el repositorio en **Cloudflare Dashboard > Workers & Pages > Create > Pages**.
 2. Configura:
    - **Root directory**: `frontend`
