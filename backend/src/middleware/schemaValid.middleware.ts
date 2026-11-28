@@ -50,6 +50,11 @@ export const validateQuery = <T extends ZodType>(
     return;
   }
 
-  req.query = result.data as Record<string, any>;
+  Object.defineProperty(req, "query", {
+    value: result.data,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  });
   next();
 };

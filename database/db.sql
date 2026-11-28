@@ -34,7 +34,25 @@ CREATE TABLE IF NOT EXISTS item_image(
     UNIQUE (item_id, orden)
 );
 
+CREATE TABLE IF NOT EXISTS tasa_cambio (
+    id SERIAL PRIMARY KEY,
+    dolar_bcv DECIMAL(14, 4) NOT NULL,
+    dolar_paralelo DECIMAL(14, 4) NOT NULL,
+    euro_bcv DECIMAL(14, 4) NOT NULL,
+    euro_paralelo DECIMAL(14, 4) NOT NULL,
+    fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_item_status ON item (status);
 CREATE INDEX IF NOT EXISTS idx_item_nombre ON item (name);
 CREATE INDEX IF NOT EXISTS idx_item_categoria ON item (categoria_id);
 CREATE INDEX IF NOT EXISTS idx_item_image_imagen ON item_image (imagen_id);
+
+CREATE INDEX IF NOT EXISTS idx_tasa_created_at ON tasa_cambio (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tasa_fecha ON tasa_cambio (fecha DESC);
+
+
+CREATE INDEX IF NOT EXISTS idx_tasa_created_at ON tasa_cambio (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tasa_fecha ON tasa_cambio (fecha DESC);

@@ -1,9 +1,8 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import { VitePWA } from 'vite-plugin-pwa'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react({
@@ -12,28 +11,37 @@ export default defineConfig({
       },
     }),
     tailwindcss(),
-    VitePWA({ 
+    VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['logo2.ico', 'logo.webp', 'flujo-usuario.webp', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
-        name: 'Mi Aplicación Web PWA',
-        short_name: 'MiApp',
-        description: 'React + Vite 8 + PWA Pura',
-        theme_color: '#ffffff',
-        display: 'standalone', 
+        name: 'Asoranele Gracia Divina - Panel Administrativo',
+        short_name: 'Asoranele',
+        description: 'Gestión de inventario, pulseras, manualidades, víveres, tasas de cambio y catálogos de Asoranele Gracia Divina.',
+        theme_color: '#7c3aed',
+        background_color: '#f8fafc',
+        display: 'standalone',
+        orientation: 'portrait-primary',
+        start_url: '/',
+        scope: '/',
+        lang: 'es',
         icons: [
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
           },
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
-      }
-    })
+            type: 'image/png',
+            purpose: 'any maskable',
+          },
+        ],
+      },
+      devOptions: {
+        enabled: true,
+      },
+    }),
   ],
-})
+});

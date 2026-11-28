@@ -1,10 +1,16 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import App from './App.tsx';
+import { AppProviders } from './providers/AppProviders.tsx';
+import { initPwaServiceWorker } from './pwa/registerSW.ts';
+
+initPwaServiceWorker();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <AppProviders>
+      <App />
+    </AppProviders>
   </StrictMode>,
-)
+);

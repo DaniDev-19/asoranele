@@ -1,111 +1,57 @@
 # Asoranele Platform - Backend API
 
-Servicio backend de alto rendimiento para la gestion de inventario, catalogacion de articulos, control cambiario multimoneda, procesamiento de imagenes y generacion de reportes comerciales en Excel y PDF.
+Servicio backend para la gestion de inventario, catalogacion de articulos, control cambiario multimoneda, procesamiento de imagenes WebP y generacion de reportes comerciales en Excel y PDF para **Asoranele Gracia Divina**.
 
-Arquitectura basada en el patron MVC adaptado a API REST desacoplada y principios de Programacion Orientada a Objetos (POO) con TypeScript estricto, Prisma ORM y PostgreSQL.
+Construido con arquitectura MVC desacoplada en capas, Programacion Orientada a Objetos (POO), TypeScript estricto, Express 5, Prisma ORM y soporte dual para **PostgreSQL local** y **Neon Serverless Postgres**.
+
+Documentacion relacionada:
+- **Documentacion General del Proyecto**: [../README.md](../README.md)
+- **Documentacion del Frontend PWA**: [../frontend/README.md](../frontend/README.md)
 
 ---
 
 ## 1. Stack Tecnologico
 
-- Entorno de Ejecucion: Node.js (v20+ o v22+ recomendada)
-- Lenguaje: TypeScript 5 con configuracion modular ECMAScript (NodeNext, verbatimModuleSyntax)
-- Framework HTTP: Express.js (v5)
-- Capa de Persistencia / ORM: Prisma ORM (v6) sobre PostgreSQL
-- Procesamiento y Optimizacion de Imagenes: Sharp (conversion automatica a WebP y redimensionamiento)
-- Almacenamiento Cloud: Cloudflare R2 via AWS SDK S3 Client (@aws-sdk/client-s3) con fallback local en disco
-- Validacion de Datos y DTOs: Zod (v3/v4)
-- Generacion de Documentos:
-  - Planillas de Calculo: ExcelJS (estilos corporativos, lectura y escritura)
-  - Documentos Vectoriales: PDFKit (fichas tecnicas con conversion cambiaria y catalogos)
-- Seguridad y Resiliencia:
-  - Helmet (cabeceras de seguridad HTTP)
-  - CORS parametrizable
-  - Express Rate Limit (limitadores globales y estrictos)
-  - Middleware global de control de excepciones con identificador unico (x-request-id)
+- **Entorno de Ejecucion**: Node.js (v20+ o v22+)
+- **Lenguaje**: TypeScript con configuracion ECMAScript (`NodeNext`)
+- **Framework HTTP**: Express.js v5
+- **ORM y Base de Datos**: Prisma ORM v6 sobre PostgreSQL (Local o Neon Cloud)
+- **Procesamiento de Imagenes**: Sharp (redimensionamiento y conversion automatica a `.webp`)
+- **Almacenamiento Cloud**: Cloudflare R2 mediante `@aws-sdk/client-s3` (con fallback local en `/uploads`)
+- **Validacion de Esquemas**: Zod
+- **Documentos**: ExcelJS (importacion/exportacion `.xlsx`) y PDFKit (catalogos y fichas tecnicas)
+- **Seguridad**: Helmet, CORS configurable por origenes, Express Rate Limit dual y trazabilidad `x-request-id`
 
 ---
 
-## 2. Principios de Arquitectura y Diseno
+## 2. Arquitectura y Flujo de Peticiones
 
-### Arquitectura de Capas (MVC Desacoplado)
-
-En esta API, la vista no reside en el servidor; el servidor expone recursos estructurados en formato JSON que alimentan el frontend desacoplado (React, Vue o aplicaciones moviles).
-
-1. Rutas (Routes): Puerta de entrada. Define los metodos HTTP, aplica middlewares de seguridad y valida estrictamente las entradas (Body, Params y Query) mediante esquemas de Zod antes de alcanzar la logica de negocio.
-2. Controladores (Controllers): Clases POO encargadas exclusivamente de la orquestacion del protocolo HTTP (extraccion de parametros, coordinacion de modelos, definicion de codigos de estado HTTP 200/201/204 y delegacion de errores no controlados a traves de next(error)).
-3. Modelos (Models): Clases POO que encapsulan el acceso y persistencia a datos mediante Prisma Client. No contienen dependencias de Express ni de protocolo web, lo que permite su reutilizacion en scripts o pruebas unitarias. Emplean inyeccion de dependencias via constructor.
-4. Servicios (Services): Modulos especializados para tareas complejas externas (DolarAPI, Sharp para WebP, Cloudflare R2 / Local Storage, generacion de PDF y analisis de hojas Excel).
-5. Middleware Centralizado de Errores: Intercepta instancias de AppError, ZodError, errores de sintaxis JSON y excepciones nativas de Prisma (P2002 para unicidad, P2025 para no encontrado, P2003 para integridad referencial), retornando respuestas consistentes.
-
----
-
-## 3. Estructura del Proyecto
-
-```
-backend/
-├── prisma/
-│   └── schema.prisma             # Definicion de esquemas y modelos Prisma
-├── src/
-│   ├── config/
-│   │   └── db.ts                 # Instancia singleton de PrismaClient y conexion
-│   ├── controllers/              # Controladores POO (HTTP layer)
-│   │   ├── categoria.controller.ts
-│   │   ├── imagen.controller.ts
-│   │   ├── item.controller.ts
-│   │   ├── tasa.controller.ts
-│   │   └── unidad.controller.ts
-│   ├── middleware/               # Middlewares defensivos y utilitarios
-│   │   ├── globalError.middleware.ts
-│   │   ├── schemaValid.middleware.ts
-│   │   └── upload.middleware.ts
-│   ├── models/                   # Capa de persistencia y consultas (Data Access)
-│   │   ├── Categoria.model.ts
-│   │   ├── Imagen.model.ts
-│   │   ├── Item.model.ts
-│   │   ├── Tasa.model.ts
-│   │   └── Unidad.model.ts
-│   ├── routes/                   # Enrutadores RESTful
-│   │   ├── categoria.route.ts
-│   │   ├── imagen.route.ts
-│   │   ├── item.route.ts
-│   │   ├── tasa.route.ts
-│   │   └── unidad.route.ts
-│   ├── services/                 # Servicios de infraestructura y procesamiento
-│   │   ├── dolar_api.service.ts
-│   │   ├── excel.service.ts
-│   │   ├── image_r2.service.ts
-│   │   └── pdf.service.ts
-│   ├── types/                    # Interfaces compartidas y definiciones DTO
-│   │   ├── pagination.ts
-│   │   └── tasas.ts
-│   ├── utils/                    # Configuraciones de seguridad
-│   │   ├── cors.ts
-│   │   ├── helmet.ts
-│   │   └── rateLimit.ts
-│   ├── validations/              # Esquemas Zod para sanitizacion y tipado
-│   │   ├── item.validation.ts
-│   │   ├── name.validation.ts
-│   │   └── tasa.validation.ts
-│   ├── app.ts                    # Configuracion y montaje de la aplicacion Express
-│   └── index.ts                  # Punto de arranque y escucha del servidor
-├── uploads/                      # Directorio local para almacenamiento de archivos
-├── .env.example                  # Plantilla de variables de entorno
-├── package.json
-└── tsconfig.json
+```mermaid
+flowchart TD
+    Req["Peticion HTTP entrante"] --> Proxy["Express trust proxy (Cloudflare / Nginx)"]
+    Proxy --> Sec["CORS + Helmet + RequestId + GlobalRateLimiter"]
+    Sec --> Route["Router (/api/v1/*) + StrictRateLimiter (rutas criticas)"]
+    Route --> Valid["schemaValidMiddleware (Zod) / Multer (MIME y tamano)"]
+    Valid -->|"Error de validacion"| Err["globalError.middleware (400 / 422)"]
+    Valid --> Ctrl["Controller POO"]
+    Ctrl --> Model["Model POO (Prisma Client)"]
+    Ctrl --> Svc["Services (DolarAPI, Sharp WebP, Cloudflare R2, ExcelJS, PDFKit)"]
+    Model -->|"DB_PROVIDER = local | neon | auto"| DB[("PostgreSQL Local o Neon")]
 ```
 
 ---
 
-## 4. Configuracion del Entorno
+## 3. Configuracion de Base de Datos Dual (Local y Neon)
 
-Copiar el archivo de variables de entorno de ejemplo:
+El archivo `src/config/db.ts` y `prisma.config.ts` implementan una resolucion automatica y validada segun `DB_PROVIDER`:
 
-```bash
-cp .env.example .env
-```
+- `DB_PROVIDER=local`: Conecta a `DATABASE_URL` (PostgreSQL local).
+- `DB_PROVIDER=neon`: Conecta a `DATABASE_URL_NEON` y valida que la cadena incluya `sslmode=require`.
+- `DB_PROVIDER=auto`: Selecciona `DATABASE_URL_NEON` cuando `NODE_ENV=production` y `DATABASE_URL` cuando `NODE_ENV=development`.
 
-Variables requeridas en el archivo `.env`:
+Al arrancar, el servidor imprime en consola el proveedor activo sin exponer credenciales (por ejemplo `PostgreSQL [NEON] (ep-.../neondb)`) y el endpoint `GET /` reporta `"database": "neon"` o `"database": "local"`.
+
+### Variables de Entorno (`backend/.env`)
 
 ```env
 PORT=4000
@@ -113,151 +59,87 @@ NODE_ENV=development
 SERVER_NAME="Asoranele Platform API"
 APP_URL=http://localhost:4000
 
-# Base de datos PostgreSQL
-DATABASE_URL="postgresql://usuario:password@localhost:5432/asoranele_db?schema=public"
+# Selector de base de datos: "local", "neon" o "auto"
+DB_PROVIDER="local"
+DATABASE_URL="postgresql://postgres:123456@localhost:5432/db_asoranele?schema=public"
+DATABASE_URL_NEON="postgresql://USER:PASSWORD@ep-xxxx-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
-# CORS (dominios autorizados separados por coma)
-ALLOWED_ORIGINS="http://localhost:3000,http://localhost:5173"
+# CORS (origenes autorizados separados por coma)
+ALLOWED_ORIGINS="http://localhost:4000,http://localhost:5173"
 
-# Modo de almacenamiento: "r2" o "local"
+# Almacenamiento: "r2" (Cloudflare R2) o "local"
 STORAGE_DRIVER=local
-
-# Credenciales de Cloudflare R2 (necesarias solo si STORAGE_DRIVER=r2)
 R2_ACCOUNT_ID=
 R2_ACCESS_KEY_ID=
 R2_SECRET_ACCESS_KEY=
 R2_BUCKET_NAME=
-R2_PUBLIC_DOMAIN=https://cdn.tu-dominio.com
+R2_PUBLIC_DOMAIN=https://pub-xxxx.r2.dev
 ```
 
 ---
 
-## 5. Catalogo de Endpoints de la API
+## 4. Seguridad Implementada
 
-La API expone prefijos versionados bajo `/api/v1/` y alias directos bajo `/api/`.
-
-### 5.1 Categorias (`/api/v1/categorias`)
-
-- `GET /`: Listado paginado con soporte de busqueda amigable multitermino (`?page=1&limit=10&search=limpieza`).
-- `GET /all`: Listado completo sin paginacion para selectores de la interfaz de usuario.
-- `GET /with-count`: Listado de categorias con conteo de articulos asociados (`_count.item`).
-- `GET /:id`: Detalle de una categoria por su clave primaria.
-- `POST /`: Crea una nueva categoria. Body: `{"name": "Bebidas"}`.
-- `PUT /:id`: Actualiza el nombre de una categoria. Body: `{"name": "Bebidas Frias"}`.
-- `DELETE /batch`: Eliminacion masiva por lote. Body: `{"ids": [1, 2, 3]}`.
-- `DELETE /:id`: Eliminacion individual por ID.
-
-### 5.2 Unidades de Medida (`/api/v1/unidades`)
-
-- `GET /`: Listado paginado con busqueda multitermino.
-- `GET /all`: Listado completo sin paginacion.
-- `GET /with-count`: Listado con conteo de articulos vinculados.
-- `GET /:id`: Detalle de la unidad por ID.
-- `POST /`: Registro de nueva unidad. Body: `{"name": "Kilogramos"}`.
-- `PUT /:id`: Modificacion de nombre de unidad.
-- `DELETE /batch`: Eliminacion en bloque por lote de IDs.
-- `DELETE /:id`: Eliminacion individual por ID.
-
-### 5.3 Articulos / Items (`/api/v1/items`)
-
-- `GET /`: Consulta avanzada con paginacion, ordenamiento y filtros:
-  - `page`: Numero de pagina (defecto: 1).
-  - `limit`: Cantidad por pagina (defecto: 10, maximo: 100).
-  - `search`: Busqueda tokenizada insensible a mayusculas/minusculas sobre nombre y descripcion.
-  - `categoria_id`: Filtrado por ID de categoria.
-  - `unidad_id`: Filtrado por ID de unidad.
-  - `status`: Filtrado por estado (`disponible`, `agotado`, `inactivo`, `descontinuado`).
-  - `minPrice` / `maxPrice`: Rango de precios en USD.
-  - `sortBy`: Campo de ordenamiento (`id`, `name`, `price`, `status`).
-  - `orderDirection`: Sentido del orden (`asc` o `desc`).
-- `GET /all`: Listado completo sin paginar con relaciones de categoria, unidad e imagenes.
-- `GET /stats`: Metricas agregadas para panel de control (totales por estado, articulos huerfanos sin categoria o unidad).
-- `GET /export/excel`: Exporta el inventario completo a una planilla Excel (.xlsx) formateada con estilos contables.
-- `POST /import/excel`: Carga masiva de articulos a traves de archivo Excel (.xlsx o .xls). Resuelve o crea categorias y unidades sobre la marcha y retorna reporte de filas exitosas y fallidas.
-- `GET /export/pdf`: Genera y descarga el catalogo oficial de productos en PDF.
-- `GET /:id/pdf`: Genera la Ficha Tecnica individual oficial del articulo en PDF con calculo de equivalencias cambiarias en Bolivares (BCV y Paralelo) y USD segun la tasa activa.
-- `GET /:id`: Detalle de un articulo con sus relaciones y coleccion ordenada de imagenes.
-- `POST /`: Crea un nuevo articulo validando la existencia de claves foraneas. Soporta asociacion de imagenes.
-  Body:
-  ```json
-  {
-    "name": "Aceite de Oliva Extra Virgen 1L",
-    "price": 12.50,
-    "description": "Prensado en frio, origen importado",
-    "status": "disponible",
-    "categoria_id": 1,
-    "unidad_id": 2,
-    "image_ids": [10, 11]
-  }
-  ```
-- `PUT /:id`: Modificacion parcial de articulo y resincronizacion automatica de imagenes con purga de archivos huerfanos.
-- `PATCH /:id/status`: Modificacion atomica de estado del articulo. Body: `{"status": "agotado"}`.
-- `DELETE /batch`: Eliminacion masiva por lote con eliminacion fisica automatica de imagenes huerfanas.
-- `DELETE /:id`: Eliminacion individual con limpieza automatica de imagenes vinculadas.
-
-### 5.4 Tasas de Cambio (`/api/v1/tasas`)
-
-- `GET /latest` (o `/current`): Obtiene la tasa activa mas reciente registrada en base de datos (Dolar BCV, Dolar Paralelo/USDT, Euro BCV, Euro Paralelo/USDT).
-- `POST /sync`: Consulta la API publica de DolarAPI en tiempo real, extrae los promedios oficiales y paralelos, y almacena un nuevo registro cronologico en PostgreSQL.
-- `GET /history`: Historico paginado de variaciones de tasas de cambio.
-- `GET /convert`: Utilidad de conversion en tiempo real entre divisas segun la ultima tasa registrada:
-  - Ejemplo: `GET /api/v1/tasas/convert?amount=100&from=USD`
-  - Retorna equivalencias exactas en Bolivares a tasa BCV y a tasa Paralelo, asi como equivalencias en Euros.
-- `POST /`: Registro manual de tasas por parte del administrador. Body: `{"dolar_bcv": 52.48, "dolar_paralelo": 61.20, "euro_bcv": 55.10, "euro_paralelo": 64.30}`.
-- `GET /:id`: Consulta de una tasa historica por su ID unico.
-
-### 5.5 Imagenes (`/api/v1/images`)
-
-- `POST /upload`: Carga de imagen individual (`multipart/form-data`, campo `image`).
-  - Convierte y comprime automaticamente a WebP de alta fidelidad.
-  - Sube a Cloudflare R2 o almacena en directorio local.
-  - Registra la URL en la tabla `imagen` y retorna su ID para asociacion.
-- `POST /upload-multiple`: Carga concurrente de hasta 5 imagenes simultaneas (`campo images`).
-- `GET /`: Galeria de imagenes registradas con paginacion.
-- `GET /:id`: Consulta de imagen por ID.
-- `DELETE /cleanup-orphans`: Barrido de mantenimiento. Identifica y elimina del storage (R2 o Local) y de la base de datos todas las imagenes que no esten asociadas a ningun articulo.
-- `DELETE /:id`: Eliminacion manual de imagen del storage fisico y de la base de datos.
+1. **Helmet (`src/utils/helmet.ts`)**: Cabeceras HTTP de proteccion con `crossOriginResourcePolicy: cross-origin` para permitir servir imagenes WebP al frontend desacoplado.
+2. **CORS (`src/utils/cors.ts`)**: Lista blanca estricta controlada desde `ALLOWED_ORIGINS`.
+3. **Rate Limiting Dual (`src/utils/rateLimit.ts`)**:
+   - Global: 300 peticiones cada 15 minutos por IP.
+   - Estricto: 30 peticiones cada 15 minutos en subida de imagenes, importacion Excel y sincronizacion con DolarAPI.
+4. **Validacion de Entradas y Archivos**:
+   - Validacion Zod en `body`, `params` y `query` antes de llegar al controlador.
+   - Multer en memoria con filtro estricto de MIME types (JPG/PNG/WEBP hasta 5 MB; Excel `.xlsx`/`.xls` hasta 20 MB).
+5. **ORM Parametrizado y Manejo Centralizado de Errores**:
+   - Prisma ORM previene inyeccion SQL.
+   - `globalError.middleware.ts` oculta trazas internas en `NODE_ENV=production` y asigna un UUID `x-request-id` a cada solicitud.
 
 ---
 
-## 6. Caracteristicas de Seguridad y Rendimiento
+## 5. Catalogo de Endpoints (`/api/v1`)
 
-1. Optimizacion de Imagenes con Sharp:
-   Cualquier archivo de imagen entrante es redimensionado proporcionalmente a un maximo de 1600x1600 y codificado a formato WebP (`quality: 80`), logrando una reduccion de tamano promedio del 80% antes de ser almacenado.
-2. Politica Anti-Huerfanos (Garbage Collection de Archivos):
-   Tanto en la actualizacion de imagenes de un articulo como en su eliminacion, el sistema inspecciona los vinculos en `item_image`. Si una imagen deja de ser referenciada por cualquier articulo, se purga automaticamente del bucket de Cloudflare R2 o del disco local.
-3. Busqueda Amigable Multitermino (Tokenized Search):
-   Las consultas de busqueda dividen el texto por espacios en blanco y evaluan cada termino de manera independiente e insensible a mayusculas/minusculas. Esto permite encontrar resultados como "Aceite de Oliva Extra Virgen" ingresando "oliva virgen", "virgen aceite" o terminos separados por multiples espacios.
-4. Precision Cambiaria Decimal:
-   Las tasas de cambio se modelan bajo tipo `DECIMAL(14, 4)` en PostgreSQL, garantizando fidelidad total con las 4 cifras decimales oficiales publicadas por el Banco Central de Venezuela.
-5. Rate Limiting Dual:
-   - Global: Maximo 300 peticiones cada 15 minutos por direccion IP.
-   - Estricto: Maximo 30 peticiones cada 15 minutos en endpoints criticos (sincronizacion de tasas, importacion masiva Excel, carga de imagenes).
-6. Trazabilidad de Peticiones:
-   Cada solicitud entrante recibe un identificador unico UUID via encabezado `x-request-id`, reflejado tanto en la respuesta HTTP como en los registros de errores del servidor.
+- **Salud**: `GET /` (estado del servidor y base de datos activa).
+- **Categorias (`/api/v1/categorias`)**: `GET /`, `GET /all`, `GET /with-count`, `GET /:id`, `POST /`, `PUT /:id`, `DELETE /batch`, `DELETE /:id`.
+- **Unidades (`/api/v1/unidades`)**: `GET /`, `GET /all`, `GET /with-count`, `GET /:id`, `POST /`, `PUT /:id`, `DELETE /batch`, `DELETE /:id`.
+- **Articulos (`/api/v1/items`)**: `GET /`, `GET /all`, `GET /stats`, `GET /export/excel`, `POST /import/excel`, `GET /export/pdf`, `GET /:id/pdf`, `GET /:id`, `POST /`, `PUT /:id`, `PATCH /:id/status`, `DELETE /batch`, `DELETE /:id`.
+- **Tasas de Cambio (`/api/v1/tasas`)**: `GET /latest`, `POST /sync`, `GET /history`, `GET /convert`, `POST /`, `GET /:id`.
+- **Imagenes (`/api/v1/images`)**: `POST /upload`, `POST /upload-multiple`, `GET /`, `GET /:id`, `DELETE /cleanup-orphans`, `DELETE /:id`.
 
 ---
 
-## 7. Scripts de Desarrollo y Despliegue
+## 6. Despliegue con Neon y Cloudflare
 
-Desde la carpeta `backend/`:
+> Nota de arquitectura: Este backend utiliza **Express 5**, **Prisma ORM** (motor binario) y **Sharp** (binario nativo `libvips`), los cuales requieren un entorno Node.js completo (contenedor o servidor Node) y **no** son compatibles directamente con el runtime aislado V8 de Cloudflare Workers sin reescritura. La arquitectura recomendada integra **Cloudflare Pages** (frontend), **Cloudflare R2** (imagenes), **Neon** (base de datos) y **Cloudflare Proxy / Tunnel** protegiendo el servidor Node.js.
+
+### Pasos de Despliegue
+1. **Preparar Neon**:
+   - En `backend/.env`, establece `DB_PROVIDER="neon"` y verifica `DATABASE_URL_NEON`.
+   - Sincroniza el esquema hacia Neon:
+     ```bash
+     npm run db:generate
+     npm run db:push
+     ```
+2. **Activar Cloudflare R2**:
+   - Configura `STORAGE_DRIVER=r2` y tus credenciales `R2_*` en las variables de entorno de produccion.
+3. **Desplegar el Backend Node.js**:
+   - Despliega `backend/` en tu proveedor Node/Docker (Render, Railway, Fly.io, Koyeb o VPS) ejecutando:
+     ```bash
+     npm install
+     npm run db:generate
+     npm run build
+     npm run start
+     ```
+   - Configura `NODE_ENV=production`, `DB_PROVIDER=neon`, `STORAGE_DRIVER=r2` y `ALLOWED_ORIGINS` con la URL de tu sitio en Cloudflare Pages.
+4. **Conectar con Cloudflare**:
+   - Apunta tu subdominio (por ejemplo `api.tu-dominio.com`) en el DNS de Cloudflare con Proxy activado (nube naranja) o mediante **Cloudflare Tunnel (`cloudflared`)** hacia el puerto `4000`. Express ya tiene habilitado `app.set("trust proxy", 1)` para respetar las cabeceras de IP real de Cloudflare.
+
+---
+
+## 7. Comandos de Desarrollo
 
 ```bash
-# Instalacion de dependencias
-npm install
-
-# Generacion del cliente Prisma
-npm run db:generate
-
-# Sincronizar esquema de base de datos directamente
-npm run db:push
-
-# Ejecucion en modo desarrollo con recarga automatica (tsx watch)
-npm run dev
-
-# Compilacion estricta de TypeScript hacia carpeta dist/
-npm run build
-
-# Ejecucion en produccion
-npm run start
+npm install       # Instalar dependencias
+npm run db:generate # Generar cliente Prisma
+npm run db:push   # Sincronizar schema.prisma con la BD activa (Local o Neon)
+npm run dev       # Servidor en modo desarrollo (tsx watch)
+npm run build     # Compilar TypeScript hacia dist/
+npm run start     # Ejecutar build de produccion
 ```

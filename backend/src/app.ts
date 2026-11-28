@@ -4,6 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import "dotenv/config";
 import express from "express";
+import { activeDbTarget } from "./config/db.js";
 import { corsOptions } from "./utils/cors.js";
 import { helmetConfig } from "./utils/helmet.js";
 import { globalRateLimiter } from "./utils/rateLimit.js";
@@ -43,6 +44,7 @@ app.get("/", (_req, res) => {
   res.status(200).json({
     status: "ok",
     message: `Servidor ${serverName} funcionando correctamente`,
+    database: activeDbTarget,
     timestamp,
     processingTime,
   });
